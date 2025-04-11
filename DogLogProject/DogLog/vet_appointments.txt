@@ -6,3 +6,5 @@ Appointment scheduled for: 04/05/2025 12:00:00
 Appointment scheduled for: 05/05/2025 15:30:00
 Vet appointment on: 2025-05-23
 Vet appointment on: 2025-06-18
+Vet appointment on: 2026-05-23 at 10:00 AM (checkup)
+Vet appointment on: 2027-04-02 at 10:00 AM (surgery)

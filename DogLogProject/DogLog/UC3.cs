@@ -9,14 +9,14 @@ namespace DogLog;
 public class UC3
 {
     private static readonly string LogFilePath = "meals_log.txt";
-    private static readonly string TestLogFilePath = "test_meals_log.txt"; // ✅ Test-specific log file
+    private static readonly string TestLogFilePath = "test_meals_log.txt"; // Test-specific log file
 
     public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
         string mostRecentMeal = GetMostRecentMeal();
         bool isTesting = testChoice != null;
 
-        // ✅ If testChoice is a meal entry, bypass menu and log meal immediately
+        // If testChoice is a meal entry, bypass menu and log meal immediately
         if (isTesting && !string.IsNullOrWhiteSpace(testChoice))
         {
             LogMeal(console, testChoice);
@@ -81,12 +81,12 @@ public class UC3
         if (testChoice != null)
         {
             mealEntry = testChoice;
-            console.WriteLine($"Test mode: Logging meal -> {mealEntry}"); // ✅ Force test output
+            console.WriteLine($"Test mode: Logging meal -> {mealEntry}"); // Force test output
         }
         else
         {
             mealEntry = console.Prompt(
-                new TextPrompt<string>("Enter meal details (e.g., 'Chicken & Rice - 3:00 PM'):")
+                new TextPrompt<string>("Enter meal details (e.g., 'Chicken & Rice'):")
                     .Validate(input => string.IsNullOrWhiteSpace(input) ? ValidationResult.Error("Meal details cannot be empty.") : ValidationResult.Success()));
         }
 
@@ -96,7 +96,7 @@ public class UC3
         try
         {
             File.AppendAllText(fileToWrite, logEntry);
-            console.WriteLine($"Meal logged: {mealEntry}"); // ✅ Ensure test output appears
+            console.WriteLine($"Meal logged: {mealEntry}"); // Ensure test output appears
         }
         catch (Exception ex)
         {
@@ -113,7 +113,7 @@ public class UC3
             try
             {
                 string history = File.ReadAllText(fileToRead);
-                console.WriteLine(history); // ✅ Ensure history prints correctly
+                console.WriteLine(history); // Ensure history prints correctly
             }
             catch (Exception ex)
             {

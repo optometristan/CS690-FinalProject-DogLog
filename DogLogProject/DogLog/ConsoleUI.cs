@@ -7,7 +7,7 @@ public class ConsoleUI
 {
     public static void Run(IAnsiConsole console, string? testChoice = null)
     {
-        bool isTesting = testChoice != null;  // ✅ Check if we’re in test mode
+        bool isTesting = testChoice != null;  // Check if we’re in test mode
 
         while (true)
         {
@@ -26,7 +26,7 @@ public class ConsoleUI
 
             console.WriteLine($"Selected: {choice}");
 
-            // ✅ During tests, exit after first iteration (prevents freezing!)
+            //  During tests, exit after first iteration (prevents freezing!)
             if (isTesting) return;
 
             if (choice == "Exit") return;

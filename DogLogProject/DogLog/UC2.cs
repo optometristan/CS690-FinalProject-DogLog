@@ -17,7 +17,7 @@ public class UC2
         bool isAppointmentSoon = CheckAppointmentDate(upcomingAppointment);
         bool isTesting = testChoice != null;
 
-        // ✅ If testChoice contains appointment details, bypass menu and log immediately
+        // If testChoice contains appointment details, bypass menu and log immediately
         if (isTesting && testChoice.Contains("|"))
         {
             LogAppointment(console, testChoice);
@@ -134,7 +134,7 @@ public class UC2
                         date >= DateTime.UtcNow ? ValidationResult.Success() : ValidationResult.Error("Date must be in the future!")));
 
             appointmentTime = console.Prompt(
-                new TextPrompt<string>("Enter appointment time (e.g., 'April 20, 10:00 AM'):")
+                new TextPrompt<string>("Enter appointment time (e.g., '10:00 AM'):")
                     .Validate(input => string.IsNullOrWhiteSpace(input) ? ValidationResult.Error("Time cannot be empty.") : ValidationResult.Success()));
 
             appointmentType = console.Prompt(
@@ -155,7 +155,7 @@ public class UC2
         }
     }
 
-    public static void ViewHistory(IAnsiConsole console) // ✅ Made public for testing
+    public static void ViewHistory(IAnsiConsole console) // Made public for testing
     {
         string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
 

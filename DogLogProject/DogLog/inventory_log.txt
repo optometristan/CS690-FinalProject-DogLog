@@ -9,3 +9,5 @@ Food logged on: 04/07/2025 20:53:15 - canned food
 Treats logged on: 04/07/2025 20:54:13 - Pupperoni
 Food logged on: 2025-04-11 20:32:45 - meatballs
 Treats logged on: 2025-04-11 20:32:51 - pizza
+Food logged on: 2025-04-11 22:22:00 - Canned Food
+Treats logged on: 2025-04-11 22:22:16 - Beef Sticks

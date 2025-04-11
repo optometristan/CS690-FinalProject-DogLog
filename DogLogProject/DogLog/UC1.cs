@@ -9,7 +9,7 @@ namespace DogLog;
 public class UC1
 {
     private static readonly string LogFilePath = "flea_treatment_log.txt";
-    private static readonly string TestLogFilePath = "test_flea_treatment_log.txt"; // ✅ Test-specific log file
+    private static readonly string TestLogFilePath = "test_flea_treatment_log.txt"; // Test-specific log file
 
     public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
@@ -45,13 +45,13 @@ public class UC1
                     return;
             }
 
-            if (isTesting) return; // ✅ Prevents infinite loop in tests
+            if (isTesting) return; // Prevents infinite loop in tests
         }
     }
 
     public static string GetMostRecentTreatmentDate()
     {
-        // ✅ Prioritize the test log file over the actual log file
+        // Prioritize the test log file over the actual log file
         string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
 
         if (File.Exists(fileToRead))
@@ -68,7 +68,7 @@ public class UC1
                             string dateString = line.Substring("Treatment administered on: ".Length);
                             if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
                             {
-                                return date.ToString("yyyy-MM-dd"); // ✅ Enforce strict formatting
+                                return date.ToString("yyyy-MM-dd"); // Enforce strict formatting
                             }
                         }
                         return null;
@@ -76,7 +76,7 @@ public class UC1
 
                     if (dates.Count > 0)
                     {
-                        return dates[0]; // ✅ Return properly formatted test data
+                        return dates[0]; // Return properly formatted test data
                     }
                 }
             }
@@ -104,7 +104,7 @@ public class UC1
     {
         DateTime now = DateTime.UtcNow;
 
-        // ✅ Ensure previous log entries do not interfere
+        // Ensure previous log entries do not interfere
         if (File.Exists(LogFilePath))
         {
             File.Delete(LogFilePath);

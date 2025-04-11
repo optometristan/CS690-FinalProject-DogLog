@@ -9,14 +9,14 @@ namespace DogLog;
 public class UC4
 {
     private static readonly string LogFilePath = "exercise_log.txt";
-    private static readonly string TestLogFilePath = "test_exercise_log.txt"; // ✅ Test-specific log file
+    private static readonly string TestLogFilePath = "test_exercise_log.txt"; // Test-specific log file
 
     public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
         string latestExercise = GetLatestExercise();
         bool isTesting = testChoice != null;
 
-        // ✅ If testChoice is an exercise entry, bypass menu and log exercise immediately
+        // If testChoice is an exercise entry, bypass menu and log exercise immediately
         if (isTesting && !string.IsNullOrWhiteSpace(testChoice))
         {
             LogExercise(console, testChoice);
@@ -81,7 +81,7 @@ public class UC4
         if (testChoice != null)
         {
             exerciseEntry = testChoice;
-            console.WriteLine($"Test mode: Logging exercise -> {exerciseEntry}"); // ✅ Force test output
+            console.WriteLine($"Test mode: Logging exercise -> {exerciseEntry}"); // Force test output
         }
         else
         {
@@ -96,7 +96,7 @@ public class UC4
         try
         {
             File.AppendAllText(fileToWrite, logEntry);
-            console.WriteLine($"Exercise logged: {exerciseEntry}"); // ✅ Ensure test output appears
+            console.WriteLine($"Exercise logged: {exerciseEntry}"); // Ensure test output appears
         }
         catch (Exception ex)
         {
@@ -113,7 +113,7 @@ public class UC4
             try
             {
                 string history = File.ReadAllText(fileToRead);
-                console.WriteLine(history); // ✅ Ensure history prints correctly
+                console.WriteLine(history); // Ensure history prints correctly
             }
             catch (Exception ex)
             {

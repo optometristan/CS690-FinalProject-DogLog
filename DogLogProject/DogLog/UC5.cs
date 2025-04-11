@@ -7,7 +7,7 @@ namespace DogLog;
 public class UC5
 {
     private static readonly string InventoryFilePath = "inventory_log.txt";
-    private static readonly string TestInventoryFilePath = "test_inventory_log.txt"; // ✅ Test-specific log file
+    private static readonly string TestInventoryFilePath = "test_inventory_log.txt"; // Test-specific log file
 
     private static bool runningLowFood = false;
     private static bool runningLowTreats = false;
@@ -16,7 +16,7 @@ public class UC5
     {
         bool isTesting = testChoice != null;
 
-        // ✅ If testChoice contains food or treats, bypass menu and log item immediately
+        // If testChoice contains food or treats, bypass menu and log item immediately
         if (isTesting && !string.IsNullOrWhiteSpace(testChoice))
         {
             string itemType = testChoice.Contains("Food") ? "Food" : "Treats";
@@ -75,7 +75,7 @@ public class UC5
         if (testChoice != null)
         {
             itemDetails = testChoice;
-            console.WriteLine($"Test mode: Logging {itemType} -> {itemDetails}"); // ✅ Force test output
+            console.WriteLine($"Test mode: Logging {itemType} -> {itemDetails}"); // Force test output
         }
         else
         {
@@ -90,7 +90,7 @@ public class UC5
         try
         {
             File.AppendAllText(fileToWrite, logEntry);
-            console.WriteLine($"{itemType} logged: {itemDetails}"); // ✅ Ensure test output appears
+            console.WriteLine($"{itemType} logged: {itemDetails}"); // Ensure test output appears
         }
         catch (Exception ex)
         {
@@ -99,7 +99,7 @@ public class UC5
     }
 
 
-    public static void ViewHistory(IAnsiConsole console) // ✅ Made public for testing
+    public static void ViewHistory(IAnsiConsole console) // Made public for testing
     {
         string fileToRead = File.Exists(TestInventoryFilePath) ? TestInventoryFilePath : InventoryFilePath;
 
@@ -108,7 +108,7 @@ public class UC5
             try
             {
                 string history = File.ReadAllText(fileToRead);
-                console.WriteLine(history); // ✅ Ensure history prints correctly
+                console.WriteLine(history); // Ensure history prints correctly
             }
             catch (Exception ex)
             {

@@ -9,7 +9,7 @@ namespace DogLog;
 public class UC2
 {
     private static readonly string LogFilePath = "vet_appointments.txt";
-    private static readonly string TestLogFilePath = "test_vet_appointments.txt"; 
+    private static readonly string TestLogFilePath = "test_vet_appointments.txt";
 
     public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
@@ -17,8 +17,8 @@ public class UC2
         bool isAppointmentSoon = CheckAppointmentDate(upcomingAppointment);
         bool isTesting = testChoice != null;
 
-        // ✅ If testChoice is a direct date input, bypass menu and log appointment immediately
-        if (isTesting && DateTime.TryParseExact(testChoice, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+        // ✅ If testChoice contains appointment details, bypass menu and log immediately
+        if (isTesting && testChoice.Contains("|"))
         {
             LogAppointment(console, testChoice);
             return;
@@ -34,7 +34,7 @@ public class UC2
                     .AddChoices(new[]
                     {
                         "Schedule Vet Appointment",
-                        "View Appointments",
+                        "View Appointment History",
                         "Back"
                     }));
 
@@ -45,8 +45,8 @@ public class UC2
                     upcomingAppointment = GetUpcomingAppointment();
                     isAppointmentSoon = CheckAppointmentDate(upcomingAppointment);
                     break;
-                case "View Appointments":
-                    ViewAppointments(console);
+                case "View Appointment History":
+                    ViewHistory(console);
                     break;
                 case "Back":
                     return;
@@ -71,7 +71,7 @@ public class UC2
                     {
                         if (line.StartsWith("Vet appointment on: "))
                         {
-                            string dateString = line.Substring("Vet appointment on: ".Length);
+                            string dateString = line.Substring("Vet appointment on: ".Length, 10);
                             if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
                             {
                                 return date.ToString("yyyy-MM-dd");
@@ -109,12 +109,16 @@ public class UC2
     private static void LogAppointment(IAnsiConsole console, string? testChoice = null)
     {
         DateTime appointmentDate;
+        string appointmentTime, appointmentType;
 
         if (testChoice != null)
         {
-            if (DateTime.TryParseExact(testChoice, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out appointmentDate))
+            string[] testInputs = testChoice.Split('|');
+            if (DateTime.TryParseExact(testInputs[0], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out appointmentDate))
             {
-                console.WriteLine($"Test mode: Using appointment date {appointmentDate.ToString("yyyy-MM-dd")}");
+                appointmentTime = testInputs.Length > 1 ? testInputs[1] : "Unknown Time";
+                appointmentType = testInputs.Length > 2 ? testInputs[2] : "General Checkup";
+                console.WriteLine($"Test mode: Scheduling appointment -> {appointmentDate.ToString("yyyy-MM-dd")} at {appointmentTime} ({appointmentType})");
             }
             else
             {
@@ -128,14 +132,22 @@ public class UC2
                 new TextPrompt<DateTime>("Enter the appointment date (YYYY-MM-DD):")
                     .Validate(date =>
                         date >= DateTime.UtcNow ? ValidationResult.Success() : ValidationResult.Error("Date must be in the future!")));
+
+            appointmentTime = console.Prompt(
+                new TextPrompt<string>("Enter appointment time (e.g., 'April 20, 10:00 AM'):")
+                    .Validate(input => string.IsNullOrWhiteSpace(input) ? ValidationResult.Error("Time cannot be empty.") : ValidationResult.Success()));
+
+            appointmentType = console.Prompt(
+                new TextPrompt<string>("Enter appointment type (e.g., 'Vaccination, Checkup, Surgery'):")
+                    .Validate(input => string.IsNullOrWhiteSpace(input) ? ValidationResult.Error("Type cannot be empty.") : ValidationResult.Success()));
         }
 
-        string logEntry = $"Vet appointment on: {appointmentDate.ToString("yyyy-MM-dd")}\n";
+        string logEntry = $"Vet appointment on: {appointmentDate.ToString("yyyy-MM-dd")} at {appointmentTime} ({appointmentType})\n";
 
         try
         {
             File.AppendAllText(LogFilePath, logEntry);
-            console.WriteLine($"Appointment scheduled: {appointmentDate.ToString("yyyy-MM-dd")}");
+            console.WriteLine($"Vet appointment scheduled: {appointmentDate.ToString("yyyy-MM-dd")} at {appointmentTime} ({appointmentType})");
         }
         catch (Exception ex)
         {
@@ -143,7 +155,7 @@ public class UC2
         }
     }
 
-    private static void ViewAppointments(IAnsiConsole console)
+    public static void ViewHistory(IAnsiConsole console) // ✅ Made public for testing
     {
         string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
 

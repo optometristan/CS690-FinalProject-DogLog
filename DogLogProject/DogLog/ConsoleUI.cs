@@ -43,10 +43,10 @@ public class ConsoleUI
                     UC3.Handle(AnsiConsole.Console, null);
                     break;
                 case "Track Exercise Activities (UC4)":
-                    UC4.Handle();
+                    UC4.Handle(AnsiConsole.Console, null);
                     break;
                 case "Manage Pet Supply Inventory (UC5)":
-                    UC5.Handle();
+                    UC5.Handle(AnsiConsole.Console, null);
                     break;
             }
         }

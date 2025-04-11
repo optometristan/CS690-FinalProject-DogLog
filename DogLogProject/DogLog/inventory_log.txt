@@ -7,3 +7,5 @@ Treats logged on: 03/28/2025 23:33:36 - cheese
 Food logged on: 04/07/2025 20:53:03 - kibble
 Food logged on: 04/07/2025 20:53:15 - canned food
 Treats logged on: 04/07/2025 20:54:13 - Pupperoni
+Food logged on: 2025-04-11 20:32:45 - meatballs
+Treats logged on: 2025-04-11 20:32:51 - pizza

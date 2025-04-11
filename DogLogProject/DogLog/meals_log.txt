@@ -1,2 +1,4 @@
 Meal logged on: 03/25/2025 18:05:14 - ate food
 Meal logged on: 03/25/2025 18:07:37 - ate peanuts
+Meal logged on: 03/25/2025 18:52:39 - ate 6 pounds of pork
+Meal logged on: 04/07/2025 20:33:02 - Turkey Dinner

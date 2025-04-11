@@ -1,2 +1,9 @@
 Food logged on: 03/25/2025 18:47:04 - Food
 Treats logged on: 03/25/2025 18:47:14 - treats
+Food logged on: 03/28/2025 23:28:24 - beef log
+Treats logged on: 03/28/2025 23:28:42 - cookies
+Food logged on: 03/28/2025 23:33:25 - kibble
+Treats logged on: 03/28/2025 23:33:36 - cheese
+Food logged on: 04/07/2025 20:53:03 - kibble
+Food logged on: 04/07/2025 20:53:15 - canned food
+Treats logged on: 04/07/2025 20:54:13 - Pupperoni

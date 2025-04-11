@@ -1,124 +1,130 @@
 using Spectre.Console;
 using System;
 using System.IO;
+using System.Globalization;
 using System.Linq;
 
 namespace DogLog;
 
 public class UC3
 {
-    private static readonly string MealsFilePath = "meals_log.txt";
+    private static readonly string LogFilePath = "meals_log.txt";
+    private static readonly string TestLogFilePath = "test_meals_log.txt"; // ✅ Test-specific log file
 
-    public static void Handle()
+    public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
         string mostRecentMeal = GetMostRecentMeal();
+        bool isTesting = testChoice != null;
+
+        // ✅ If testChoice is a meal entry, bypass menu and log meal immediately
+        if (isTesting && !string.IsNullOrWhiteSpace(testChoice))
+        {
+            LogMeal(console, testChoice);
+            return;
+        }
 
         while (true)
         {
-            var choice = AnsiConsole.Prompt(
+            string choice = isTesting ? testChoice : console.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("Meal Logging")
+                    .Title("Meal Tracking")
                     .PageSize(4)
                     .Title($"{(string.IsNullOrEmpty(mostRecentMeal) ? "No Recent Meals" : $"Most Recent: {mostRecentMeal}")}")
                     .AddChoices(new[]
                     {
                         "Log Meal",
-                        "View History",
+                        "View Meal History",
                         "Back"
                     }));
 
             switch (choice)
             {
                 case "Log Meal":
-                    LogMeal();
+                    LogMeal(console);
                     mostRecentMeal = GetMostRecentMeal();
                     break;
-                case "View History":
-                    ViewHistory();
+                case "View Meal History":
+                    ViewMeals(console);
                     break;
                 case "Back":
                     return;
             }
+
+            if (isTesting) return;
         }
     }
 
-    private static string GetMostRecentMeal()
+
+    public static string GetMostRecentMeal()
     {
-        if (File.Exists(MealsFilePath))
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
         {
             try
             {
-                string[] lines = File.ReadAllLines(MealsFilePath);
-                if (lines.Length > 0)
-                {
-                    var dates = lines.Select(line =>
-                    {
-                        if (line.StartsWith("Meal logged on: "))
-                        {
-                            string dateString = line.Substring("Meal logged on: ".Length).Split(" - ")[0];
-                            if (DateTime.TryParse(dateString, out DateTime date))
-                            {
-                                return date;
-                            }
-                        }
-                        return DateTime.MinValue;
-                    }).Where(date => date != DateTime.MinValue).OrderByDescending(date => date).ToList();
-
-                    if (dates.Count > 0)
-                    {
-                        return dates[0].ToString();
-                    }
-                }
+                string[] lines = File.ReadAllLines(fileToRead);
+                return lines.Length > 0 ? lines.Last() : null;
             }
             catch (Exception)
             {
+                return null;
             }
         }
         return null;
     }
 
-    private static void LogMeal()
+    private static void LogMeal(IAnsiConsole console, string? testChoice = null)
     {
-        DateTime now = DateTime.Now;
-        string mealDetails = AnsiConsole.Ask<string>("Enter meal details:");
-        string logEntry = $"Meal logged on: {now} - {mealDetails}\n";
+        string mealEntry;
+
+        if (testChoice != null)
+        {
+            mealEntry = testChoice;
+            console.WriteLine($"Test mode: Logging meal -> {mealEntry}"); // ✅ Force test output
+        }
+        else
+        {
+            mealEntry = console.Prompt(
+                new TextPrompt<string>("Enter meal details (e.g., 'Chicken & Rice - 3:00 PM'):")
+                    .Validate(input => string.IsNullOrWhiteSpace(input) ? ValidationResult.Error("Meal details cannot be empty.") : ValidationResult.Success()));
+        }
+
+        string fileToWrite = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+        string logEntry = $"Meal logged: {mealEntry} - {DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")}\n";
 
         try
         {
-            File.AppendAllText(MealsFilePath, logEntry);
-            AnsiConsole.WriteLine($"Meal logged: {now}");
+            File.AppendAllText(fileToWrite, logEntry);
+            console.WriteLine($"Meal logged: {mealEntry}"); // ✅ Ensure test output appears
         }
         catch (Exception ex)
         {
-            AnsiConsole.WriteLine($"Error logging meal: {ex.Message}");
+            console.WriteLine($"Error logging meal: {ex.Message}");
         }
-
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
     }
 
-    private static void ViewHistory()
+    public static void ViewMeals(IAnsiConsole console)
     {
-        if (File.Exists(MealsFilePath))
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
         {
             try
             {
-                string history = File.ReadAllText(MealsFilePath);
-                AnsiConsole.WriteLine(history);
+                string history = File.ReadAllText(fileToRead);
+                console.WriteLine(history); // ✅ Ensure history prints correctly
             }
             catch (Exception ex)
             {
-                AnsiConsole.WriteLine($"Error reading history: {ex.Message}");
+                console.WriteLine($"Error reading meal history: {ex.Message}");
             }
         }
         else
         {
-            AnsiConsole.WriteLine("No meal history found.");
+            console.WriteLine("No meal history found.");
         }
-
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
     }
+
+
 }

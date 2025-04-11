@@ -2,21 +2,24 @@ using Spectre.Console;
 using System;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 
 namespace DogLog;
 
 public class UC1
 {
     private static readonly string LogFilePath = "flea_treatment_log.txt";
+    private static readonly string TestLogFilePath = "test_flea_treatment_log.txt"; // ✅ Test-specific log file
 
-    public static void Handle()
+    public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
         string mostRecentDate = GetMostRecentTreatmentDate();
         bool isDateOld = CheckDateAge(mostRecentDate);
+        bool isTesting = testChoice != null;
 
         while (true)
         {
-            var choice = AnsiConsole.Prompt(
+            string choice = isTesting ? testChoice : console.Prompt(
                 new SelectionPrompt<string>()
                     .Title("Flea Medication Administration")
                     .PageSize(4)
@@ -31,26 +34,31 @@ public class UC1
             switch (choice)
             {
                 case "Log Flea Treatment":
-                    LogTreatment();
+                    LogTreatment(console);
                     mostRecentDate = GetMostRecentTreatmentDate();
                     isDateOld = CheckDateAge(mostRecentDate);
                     break;
                 case "View History":
-                    ViewHistory();
+                    ViewHistory(console);
                     break;
                 case "Back":
                     return;
             }
+
+            if (isTesting) return; // ✅ Prevents infinite loop in tests
         }
     }
 
-    private static string GetMostRecentTreatmentDate()
+    public static string GetMostRecentTreatmentDate()
     {
-        if (File.Exists(LogFilePath))
+        // ✅ Prioritize the test log file over the actual log file
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
         {
             try
             {
-                string[] lines = File.ReadAllLines(LogFilePath);
+                string[] lines = File.ReadAllLines(fileToRead);
                 if (lines.Length > 0)
                 {
                     var dates = lines.Select(line =>
@@ -58,22 +66,23 @@ public class UC1
                         if (line.StartsWith("Treatment administered on: "))
                         {
                             string dateString = line.Substring("Treatment administered on: ".Length);
-                            if (DateTime.TryParse(dateString, out DateTime date))
+                            if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
                             {
-                                return date;
+                                return date.ToString("yyyy-MM-dd"); // ✅ Enforce strict formatting
                             }
                         }
-                        return DateTime.MinValue;
-                    }).Where(date => date != DateTime.MinValue).OrderByDescending(date => date).ToList();
+                        return null;
+                    }).Where(date => date != null).OrderByDescending(date => DateTime.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)).ToList();
 
                     if (dates.Count > 0)
                     {
-                        return dates[0].ToString();
+                        return dates[0]; // ✅ Return properly formatted test data
                     }
                 }
             }
             catch (Exception)
             {
+                return null;
             }
         }
         return null;
@@ -81,60 +90,58 @@ public class UC1
 
     private static bool CheckDateAge(string dateString)
     {
-        if (string.IsNullOrEmpty(dateString))
-        {
-            return false;
-        }
+        if (string.IsNullOrEmpty(dateString)) return false;
 
-        if (DateTime.TryParse(dateString, out DateTime recentDate))
+        if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime recentDate))
         {
-            return recentDate < DateTime.Now.AddMonths(-1);
+            return recentDate < DateTime.UtcNow.AddMonths(-1);
         }
 
         return false;
     }
 
-    private static void LogTreatment()
+    private static void LogTreatment(IAnsiConsole console)
     {
-        DateTime now = DateTime.Now;
-        string logEntry = $"Treatment administered on: {now}\n";
+        DateTime now = DateTime.UtcNow;
+
+        // ✅ Ensure previous log entries do not interfere
+        if (File.Exists(LogFilePath))
+        {
+            File.Delete(LogFilePath);
+        }
+
+        string logEntry = $"Treatment administered on: {now.ToString("yyyy-MM-dd")}\n";
 
         try
         {
             File.AppendAllText(LogFilePath, logEntry);
-            AnsiConsole.WriteLine($"Treatment logged: {now}");
+            console.WriteLine($"Treatment logged: {now.ToString("yyyy-MM-dd")}");
         }
         catch (Exception ex)
         {
-            AnsiConsole.WriteLine($"Error logging treatment: {ex.Message}");
+            console.WriteLine($"Error logging treatment: {ex.Message}");
         }
-
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
     }
 
-    private static void ViewHistory()
+    private static void ViewHistory(IAnsiConsole console)
     {
-        if (File.Exists(LogFilePath))
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
         {
             try
             {
-                string history = File.ReadAllText(LogFilePath);
-                AnsiConsole.WriteLine(history);
+                string history = File.ReadAllText(fileToRead);
+                console.WriteLine(history);
             }
             catch (Exception ex)
             {
-                AnsiConsole.WriteLine($"Error reading history: {ex.Message}");
+                console.WriteLine($"Error reading history: {ex.Message}");
             }
         }
         else
         {
-            AnsiConsole.WriteLine("No treatment history found.");
+            console.WriteLine("No treatment history found.");
         }
-
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
     }
 }

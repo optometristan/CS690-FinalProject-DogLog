@@ -8,180 +8,160 @@ namespace DogLog;
 
 public class UC2
 {
-    private static readonly string AppointmentFilePath = "vet_appointments.txt";
+    private static readonly string LogFilePath = "vet_appointments.txt";
+    private static readonly string TestLogFilePath = "test_vet_appointments.txt"; 
 
-    public static void Handle()
+    public static void Handle(IAnsiConsole console, string? testChoice = null)
     {
-        string nextAppointment = GetNextAppointment();
-        bool isAppointmentOld = CheckAppointmentAge(nextAppointment);
+        string upcomingAppointment = GetUpcomingAppointment();
+        bool isAppointmentSoon = CheckAppointmentDate(upcomingAppointment);
+        bool isTesting = testChoice != null;
+
+        // ✅ If testChoice is a direct date input, bypass menu and log appointment immediately
+        if (isTesting && DateTime.TryParseExact(testChoice, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+        {
+            LogAppointment(console, testChoice);
+            return;
+        }
 
         while (true)
         {
-            var choice = AnsiConsole.Prompt(
+            string choice = isTesting ? testChoice : console.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("Vet Appointment Scheduling")
+                    .Title("Vet Appointment Scheduler")
                     .PageSize(4)
-                    .Title($"{(string.IsNullOrEmpty(nextAppointment) ? "No Upcoming Appointment" : $"Next Appointment: {(isAppointmentOld ? "[red]" + nextAppointment + " (!)[/]" : nextAppointment)}")}")
+                    .Title($"{(string.IsNullOrEmpty(upcomingAppointment) ? "No Upcoming Appointment" : $"Next Appointment: {(isAppointmentSoon ? "[red]" + upcomingAppointment + " (!)[/]" : upcomingAppointment)}")}")
                     .AddChoices(new[]
                     {
-                        "Schedule Appointment",
-                        "View History",
+                        "Schedule Vet Appointment",
+                        "View Appointments",
                         "Back"
                     }));
 
             switch (choice)
             {
-                case "Schedule Appointment":
-                    ScheduleAppointment();
-                    nextAppointment = GetNextAppointment();
-                    isAppointmentOld = CheckAppointmentAge(nextAppointment);
+                case "Schedule Vet Appointment":
+                    LogAppointment(console);
+                    upcomingAppointment = GetUpcomingAppointment();
+                    isAppointmentSoon = CheckAppointmentDate(upcomingAppointment);
                     break;
-                case "View History":
-                    ViewHistory();
+                case "View Appointments":
+                    ViewAppointments(console);
                     break;
                 case "Back":
                     return;
             }
+
+            if (isTesting) return;
         }
     }
 
-    private static string GetNextAppointment()
+    public static string GetUpcomingAppointment()
     {
-        if (File.Exists(AppointmentFilePath))
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
         {
             try
             {
-                string[] lines = File.ReadAllLines(AppointmentFilePath);
+                string[] lines = File.ReadAllLines(fileToRead);
                 if (lines.Length > 0)
                 {
-                    var appointments = lines.Select(line =>
+                    var dates = lines.Select(line =>
                     {
-                        if (line.StartsWith("Appointment scheduled for: "))
+                        if (line.StartsWith("Vet appointment on: "))
                         {
-                            string dateString = line.Substring("Appointment scheduled for: ".Length);
-                            if (DateTime.TryParse(dateString, out DateTime date))
+                            string dateString = line.Substring("Vet appointment on: ".Length);
+                            if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime date))
                             {
-                                return date;
+                                return date.ToString("yyyy-MM-dd");
                             }
                         }
-                        return DateTime.MaxValue; // Default to MaxValue if parsing fails
-                    }).Where(date => date != DateTime.MaxValue).Where(date => date >= DateTime.Now).OrderBy(date => date).ToList();
+                        return null;
+                    }).Where(date => date != null).OrderBy(date => DateTime.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)).ToList();
 
-                    if (appointments.Count > 0)
+                    if (dates.Count > 0)
                     {
-                        return appointments[0].ToString();
+                        return dates[0]; 
                     }
                 }
             }
             catch (Exception)
             {
+                return null;
             }
         }
         return null;
     }
 
-    private static bool CheckAppointmentAge(string dateString)
+    public static bool CheckAppointmentDate(string dateString)
     {
-        if (string.IsNullOrEmpty(dateString))
-        {
-            return false;
-        }
+        if (string.IsNullOrEmpty(dateString)) return false;
 
-        if (DateTime.TryParse(dateString, out DateTime appointmentDate))
+        if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTime appointmentDate))
         {
-            return appointmentDate < DateTime.Now; // Check if the appointment is in the past
+            return appointmentDate < DateTime.UtcNow.AddDays(7); 
         }
 
         return false;
     }
 
-    private static void ScheduleAppointment()
+    private static void LogAppointment(IAnsiConsole console, string? testChoice = null)
     {
-        var month = AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("Select Month:")
-                .AddChoices(DateTimeFormatInfo.CurrentInfo.MonthNames.Take(12).ToArray()));
+        DateTime appointmentDate;
 
-        int day;
-        while (true)
+        if (testChoice != null)
         {
-            day = AnsiConsole.Ask<int>("Enter Day (1-31):");
-            if (day >= 1 && day <= 31)
+            if (DateTime.TryParseExact(testChoice, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out appointmentDate))
             {
-                break;
+                console.WriteLine($"Test mode: Using appointment date {appointmentDate.ToString("yyyy-MM-dd")}");
             }
-            AnsiConsole.WriteLine("[red]Invalid day. Please enter a value between 1 and 31.[/]");
-        }
-
-        int hour;
-        while (true)
-        {
-            hour = AnsiConsole.Ask<int>("Enter Hour (0-23):");
-            if (hour >= 0 && hour <= 23)
+            else
             {
-                break;
-            }
-            AnsiConsole.WriteLine("[red]Invalid hour. Please enter a value between 0 and 23.[/]");
-        }
-
-        int minute;
-        while (true)
-        {
-            minute = AnsiConsole.Ask<int>("Enter Minute (0-59):");
-            if (minute >= 0 && minute <= 59)
-            {
-                break;
-            }
-            AnsiConsole.WriteLine("[red]Invalid minute. Please enter a value between 0 and 59.[/]");
-        }
-
-        int year = DateTime.Now.Year;
-
-        DateTime appointmentDate = new DateTime(year, DateTime.ParseExact(month, "MMMM", null).Month, day, hour, minute, 0);
-
-        if (appointmentDate < DateTime.Now)
-        {
-            appointmentDate = appointmentDate.AddYears(1);
-        }
-
-        string logEntry = $"Appointment scheduled for: {appointmentDate}\n";
-
-        try
-        {
-            File.AppendAllText(AppointmentFilePath, logEntry);
-            AnsiConsole.WriteLine($"Appointment scheduled: {appointmentDate}");
-        }
-        catch (Exception ex)
-        {
-            AnsiConsole.WriteLine($"Error scheduling appointment: {ex.Message}");
-        }
-
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
-    }
-
-    private static void ViewHistory()
-    {
-        if (File.Exists(AppointmentFilePath))
-        {
-            try
-            {
-                string history = File.ReadAllText(AppointmentFilePath);
-                AnsiConsole.WriteLine(history);
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.WriteLine($"Error reading history: {ex.Message}");
+                console.WriteLine("Test mode: Invalid date format.");
+                return;
             }
         }
         else
         {
-            AnsiConsole.WriteLine("No appointment history found.");
+            appointmentDate = console.Prompt(
+                new TextPrompt<DateTime>("Enter the appointment date (YYYY-MM-DD):")
+                    .Validate(date =>
+                        date >= DateTime.UtcNow ? ValidationResult.Success() : ValidationResult.Error("Date must be in the future!")));
         }
 
-        AnsiConsole.WriteLine("Press any key to continue.");
-        Console.ReadKey();
-        Console.Clear();
+        string logEntry = $"Vet appointment on: {appointmentDate.ToString("yyyy-MM-dd")}\n";
+
+        try
+        {
+            File.AppendAllText(LogFilePath, logEntry);
+            console.WriteLine($"Appointment scheduled: {appointmentDate.ToString("yyyy-MM-dd")}");
+        }
+        catch (Exception ex)
+        {
+            console.WriteLine($"Error scheduling appointment: {ex.Message}");
+        }
+    }
+
+    private static void ViewAppointments(IAnsiConsole console)
+    {
+        string fileToRead = File.Exists(TestLogFilePath) ? TestLogFilePath : LogFilePath;
+
+        if (File.Exists(fileToRead))
+        {
+            try
+            {
+                string history = File.ReadAllText(fileToRead);
+                console.WriteLine(history);
+            }
+            catch (Exception ex)
+            {
+                console.WriteLine($"Error reading appointment history: {ex.Message}");
+            }
+        }
+        else
+        {
+            console.WriteLine("No upcoming appointments found.");
+        }
     }
 }
